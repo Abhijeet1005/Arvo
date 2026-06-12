@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node agent.js connect --room validate-test)",
+      "PowerShell(npm run build 2>&1)",
+      "PowerShell($f = \"C:\\\\Users\\\\Omen\\\\.claude\\\\projects\\\\D--Project-support-agent\\\\e97c6303-7319-48ca-a1b0-a83b1c7e3f29\\\\tool-results\\\\mcp-_21st-dev_magic-21st_magic_component_inspiration-1781005003383.txt\"; $raw = Get-Content $f -Raw; \"LEN=$\\($raw.Length\\)\"; $raw.Substring\\(0, 2600\\))"
+    ]
+  }
+}
