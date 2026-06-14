@@ -1,6 +1,7 @@
 import './globals.css';
 import { Inter } from 'next/font/google';
 import { DashboardShell } from '@/components/dashboard-shell';
+import { TopLoader } from '@/components/top-loader';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
 
@@ -26,6 +27,7 @@ export default function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
+        <TopLoader />
         <DashboardShell>{children}</DashboardShell>
       </body>
     </html>
