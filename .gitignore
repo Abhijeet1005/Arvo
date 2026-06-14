@@ -8,3 +8,6 @@ build/
 .agent.json
 *.log
 .DS_Store
+
+# Deploy artifacts
+*.tar.gz
