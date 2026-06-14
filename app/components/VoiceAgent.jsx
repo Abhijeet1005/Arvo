@@ -80,16 +80,16 @@ function Inner() {
 
       {turns.length > 0 ? (
         <div
-          className="flex max-h-72 w-full max-w-xl flex-col gap-2 overflow-y-auto rounded-xl border border-border bg-white p-3.5 shadow-sm"
+          className="flex max-h-72 w-full max-w-xl flex-col gap-2 overflow-y-auto rounded-xl border border-border bg-card p-3.5 shadow-sm"
           aria-live="polite"
         >
           {turns.map((t, i) => (
             <div
               key={i}
               className={cn(
-                'flex max-w-[82%] flex-col gap-0.5 rounded-xl px-3 py-2 text-sm leading-snug',
+                'flex max-w-[82%] flex-col gap-0.5 rounded-xl px-3 py-2 text-sm leading-snug animate-fade-up',
                 t.who === 'you'
-                  ? 'self-end rounded-br-sm bg-gradient-to-br from-indigo-500 to-violet-500 text-white'
+                  ? 'self-end rounded-br-sm bg-emerald-600 text-white'
                   : 'self-start rounded-bl-sm bg-secondary text-foreground'
               )}
             >

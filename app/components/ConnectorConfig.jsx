@@ -9,7 +9,7 @@ import { Loader2, Database, Globe, FlaskConical, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const selectCls =
-  'flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:border-indigo-500 focus-visible:ring-4 focus-visible:ring-indigo-500/20';
+  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:border-emerald-500 focus-visible:ring-4 focus-visible:ring-emerald-500/20';
 
 const INTENTS = [
   { key: 'lookup_order', label: 'Look up order', sample: 'ORD-1001' },
@@ -171,11 +171,11 @@ export default function ConnectorConfig() {
               type="button"
               onClick={() => setType(t.id)}
               className={cn(
-                'flex flex-col items-start gap-1 rounded-xl border p-4 text-left transition-all',
-                active ? 'border-indigo-400 bg-gradient-to-br from-indigo-50 to-violet-50 ring-1 ring-indigo-100' : 'border-border bg-white hover:border-indigo-200'
+                'flex flex-col items-start gap-1 rounded-xl border p-4 text-left transition-[border-color,background-color,box-shadow,transform] duration-200 ease-out-strong active:scale-[0.99]',
+                active ? 'border-emerald-400 bg-emerald-50 ring-1 ring-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:ring-emerald-500/20' : 'border-border bg-card hover:border-emerald-200 dark:hover:border-emerald-500/40'
               )}
             >
-              <span className={cn('grid size-8 place-items-center rounded-lg', active ? 'bg-gradient-to-br from-indigo-500 to-violet-500 text-white' : 'bg-secondary text-muted-foreground')}>
+              <span className={cn('grid size-8 place-items-center rounded-lg', active ? 'bg-emerald-600 text-white' : 'bg-secondary text-muted-foreground')}>
                 <Icon className="size-4" />
               </span>
               <span className="mt-1 text-sm font-semibold">{t.label}</span>
@@ -188,7 +188,7 @@ export default function ConnectorConfig() {
       {/* DEMO */}
       {type === 'demo' && (
         <div className="rounded-lg border border-border bg-secondary/40 p-4 text-sm text-muted-foreground">
-          The agent uses built-in sample data so you can test immediately. Try order <code className="rounded bg-white px-1.5 py-0.5 text-[11px]">ORD-1001</code> or ticket <code className="rounded bg-white px-1.5 py-0.5 text-[11px]">TKT-501</code>. Switch to REST API or Database to connect a real source.
+          The agent uses built-in sample data so you can test immediately. Try order <code className="rounded bg-secondary px-1.5 py-0.5 text-[11px]">ORD-1001</code> or ticket <code className="rounded bg-secondary px-1.5 py-0.5 text-[11px]">TKT-501</code>. Switch to REST API or Database to connect a real source.
         </div>
       )}
 
@@ -312,7 +312,7 @@ export default function ConnectorConfig() {
           </Button>
         </div>
         {testOut && (
-          <pre className={cn('mt-3 max-h-56 overflow-auto rounded-lg border p-3 text-xs', testOut.ok ? 'border-emerald-200 bg-emerald-50/50' : 'border-destructive/30 bg-destructive/5')}>
+          <pre className={cn('mt-3 max-h-56 overflow-auto rounded-lg border p-3 text-xs', testOut.ok ? 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-500/20 dark:bg-emerald-500/10' : 'border-destructive/30 bg-destructive/5')}>
             {JSON.stringify(testOut.ok ? testOut.result : { error: testOut.error }, null, 2)}
           </pre>
         )}

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Bot, BookOpen, Plug, PhoneCall, Settings, Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const NAV = [
   { label: 'Overview', icon: LayoutDashboard, href: '/' },
@@ -26,7 +27,7 @@ const TITLES = {
 
 function Logo() {
   return (
-    <span className="grid h-9 w-9 place-items-center rounded-[10px] bg-gradient-to-br from-indigo-500 to-violet-500 shadow-md shadow-indigo-500/40">
+    <span className="grid h-9 w-9 place-items-center rounded-[10px] bg-emerald-600 shadow-sm shadow-emerald-600/30">
       <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
         <rect x="4.5" y="9" width="2.6" height="6" rx="1.3" fill="#fff" />
         <rect x="10.7" y="4.5" width="2.6" height="15" rx="1.3" fill="#fff" />
@@ -46,7 +47,7 @@ export function DashboardShell({ children }) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-white/85 backdrop-blur-xl transition-transform duration-200 lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-card/85 backdrop-blur-xl transition-transform duration-200 lg:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full'
         )}
       >
@@ -78,10 +79,11 @@ export function DashboardShell({ children }) {
                 href={item.href}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  'before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-emerald-600 before:transition-transform before:duration-200 before:ease-out',
                   active
-                    ? 'bg-gradient-to-br from-indigo-50 to-violet-50 text-indigo-700 ring-1 ring-indigo-100'
-                    : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                    ? 'bg-emerald-50/70 text-emerald-700 before:scale-y-100 dark:bg-emerald-500/10 dark:text-emerald-300'
+                    : 'text-muted-foreground before:scale-y-0 hover:bg-secondary hover:text-foreground'
                 )}
               >
                 <Icon className="size-[18px]" />
@@ -91,21 +93,34 @@ export function DashboardShell({ children }) {
           })}
         </nav>
 
-        <div className="m-3 rounded-xl border border-border bg-secondary/50 p-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
-            <span className="size-2 rounded-full bg-emerald-500" />
+        <div className="mx-3 rounded-xl border border-emerald-100 bg-emerald-50/60 p-3 dark:border-emerald-500/20 dark:bg-emerald-500/10">
+          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+            <span className="live-dot" aria-hidden="true" />
             Agent live
           </div>
-          <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
-            Web voice ready. Connect a phone number to go fully live.
+          <p className="mt-1 text-[11px] leading-snug text-emerald-700/80 dark:text-emerald-400/80">
+            Web voice is ready. Add a phone number to go fully live.
           </p>
         </div>
+
+        <Link
+          href="/settings"
+          onClick={() => setOpen(false)}
+          className="m-3 flex items-center gap-3 rounded-xl border border-border bg-card p-2.5 transition-colors hover:bg-secondary"
+        >
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-emerald-600 text-[11px] font-bold text-white">SA</span>
+          <span className="min-w-0 flex-1 leading-tight">
+            <span className="block truncate text-xs font-semibold">Support workspace</span>
+            <span className="block truncate text-[11px] text-muted-foreground">Manage settings</span>
+          </span>
+          <Settings className="size-4 shrink-0 text-muted-foreground" />
+        </Link>
       </aside>
 
       {/* Mobile overlay */}
       {open && (
         <div
-          className="fixed inset-0 z-30 bg-slate-900/30 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-stone-900/40 backdrop-blur-sm lg:hidden"
           onClick={() => setOpen(false)}
           aria-hidden="true"
         />
@@ -113,7 +128,7 @@ export function DashboardShell({ children }) {
 
       {/* Main column */}
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-white/70 px-4 backdrop-blur-xl sm:px-6">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-card/70 px-4 backdrop-blur-xl sm:px-6">
           <button
             type="button"
             className="rounded-md p-2 text-muted-foreground hover:bg-secondary lg:hidden"
@@ -127,11 +142,12 @@ export function DashboardShell({ children }) {
             {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <span className="hidden items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 sm:inline-flex">
+            <ThemeToggle />
+            <span className="hidden items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400 sm:inline-flex">
               <span className="size-1.5 rounded-full bg-emerald-500" />
               Live
             </span>
-            <span className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-xs font-bold text-white">
+            <span className="grid size-9 place-items-center rounded-full bg-emerald-600 text-xs font-bold text-white">
               SA
             </span>
           </div>

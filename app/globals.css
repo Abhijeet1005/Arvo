@@ -4,39 +4,71 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 22% 11%;
+    /* Warm Minimal — warm off-white canvas, emerald accent, stone neutrals */
+    --background: 40 30% 98%;
+    --foreground: 24 10% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 222 22% 11%;
+    --card-foreground: 24 10% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 22% 11%;
-    --primary: 239 84% 67%;
+    --popover-foreground: 24 10% 10%;
+    --primary: 161 94% 30%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 20% 96%;
-    --secondary-foreground: 222 22% 11%;
-    --muted: 240 20% 96%;
-    --muted-foreground: 222 9% 46%;
-    --accent: 240 24% 95%;
-    --accent-foreground: 222 22% 11%;
-    --destructive: 0 84% 60%;
+    --secondary: 40 14% 96%;
+    --secondary-foreground: 24 10% 10%;
+    --muted: 40 14% 96%;
+    --muted-foreground: 25 6% 45%;
+    --accent: 36 16% 94%;
+    --accent-foreground: 24 10% 10%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 22% 92%;
-    --input: 240 18% 88%;
-    --ring: 239 84% 67%;
+    --border: 24 10% 90%;
+    --input: 24 10% 87%;
+    --ring: 161 94% 30%;
     --radius: 0.75rem;
+
+    /* Emil easing curves — stronger than the built-in CSS easings */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  /* Warm dark — near-black warm canvas, brighter emerald accent */
+  .dark {
+    --background: 24 12% 8%;
+    --foreground: 40 20% 96%;
+    --card: 24 10% 11%;
+    --card-foreground: 40 20% 96%;
+    --popover: 24 10% 11%;
+    --popover-foreground: 40 20% 96%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 24 8% 16%;
+    --secondary-foreground: 40 20% 96%;
+    --muted: 24 8% 16%;
+    --muted-foreground: 30 8% 60%;
+    --accent: 24 8% 18%;
+    --accent-foreground: 40 20% 96%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 24 8% 20%;
+    --input: 24 8% 22%;
+    --ring: 160 84% 39%;
   }
 
   * { border-color: hsl(var(--border)); }
 
   body {
-    @apply text-foreground;
-    background:
-      radial-gradient(1100px 520px at 82% -8%, rgba(139, 92, 246, 0.10), transparent 60%),
-      radial-gradient(900px 520px at -6% 0%, rgba(99, 102, 241, 0.10), transparent 55%),
-      #f7f8fc;
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
+}
+
+@layer utilities {
+  /* Warm-tinted layered shadows — defined here to avoid Tailwind's colored-shadow parser */
+  .shadow-card { box-shadow: 0 1px 2px 0 rgba(28, 25, 23, 0.04), 0 1px 3px 0 rgba(28, 25, 23, 0.06); }
+  .shadow-card-hover { box-shadow: 0 6px 16px -4px rgba(28, 25, 23, 0.10), 0 2px 6px -2px rgba(28, 25, 23, 0.06); }
+  .shadow-pop { box-shadow: 0 12px 32px -8px rgba(28, 25, 23, 0.18); }
 }
 
 /* Bespoke animated voice orb (kept hand-rolled for the pulse rings) */
@@ -45,21 +77,24 @@
   width: 108px; height: 108px;
   border-radius: 9999px;
   border: none; cursor: pointer; color: #fff;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  box-shadow: 0 14px 34px rgba(99, 102, 241, 0.45);
+  background: #059669;
+  box-shadow: 0 14px 34px rgba(5, 150, 105, 0.42);
   display: grid; place-items: center;
-  transition: transform 0.15s ease, box-shadow 0.2s ease;
+  transition: transform 0.18s var(--ease-out), box-shadow 0.2s var(--ease-out);
 }
-.orb:hover { transform: translateY(-2px) scale(1.02); }
+@media (hover: hover) and (pointer: fine) {
+  .orb:hover { transform: translateY(-2px) scale(1.02); }
+}
+.orb:active { transform: scale(0.97); }
 .orb:disabled { opacity: 0.7; cursor: default; }
 .orb.connected::before, .orb.connected::after {
   content: ""; position: absolute; inset: -2px; border-radius: 9999px;
-  border: 2px solid rgba(99, 102, 241, 0.55);
+  border: 2px solid rgba(5, 150, 105, 0.55);
   animation: orbPulse 2s ease-out infinite;
 }
 .orb.connected::after { animation-delay: 1s; }
 .orb.speaking::before, .orb.speaking::after {
-  animation-duration: 1.1s; border-color: rgba(139, 92, 246, 0.7);
+  animation-duration: 1.1s; border-color: rgba(13, 148, 136, 0.7);
 }
 @keyframes orbPulse {
   0% { transform: scale(1); opacity: 0.65; }
@@ -67,13 +102,15 @@
 }
 .live-dot {
   width: 9px; height: 9px; border-radius: 9999px;
-  background: #22c55e; animation: livePulse 1.6s ease-out infinite;
+  background: #10b981; animation: livePulse 1.6s ease-out infinite;
 }
-.live-dot.speaking { background: #8b5cf6; }
+.live-dot.speaking { background: #14b8a6; }
 @keyframes livePulse {
-  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
-  100% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  100% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
 }
 @media (prefers-reduced-motion: reduce) {
   .orb.connected::before, .orb.connected::after, .live-dot { animation: none; }
+  /* Keep the content, drop the movement (Emil: gentler, not zero) */
+  .animate-fade-up { animation: none; }
 }

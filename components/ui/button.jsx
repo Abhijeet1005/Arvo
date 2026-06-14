@@ -3,14 +3,14 @@ import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/25 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-[color,background-color,border-color,box-shadow,transform] duration-150 ease-out-strong active:scale-[0.97] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/30 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/30 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/40",
+          "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/70",
-        outline: "border border-input bg-white hover:border-indigo-400 hover:bg-secondary/60",
+        outline: "border border-input bg-card hover:border-emerald-400 hover:bg-secondary/60",
         ghost: "hover:bg-secondary",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
       },

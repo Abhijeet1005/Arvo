@@ -16,7 +16,7 @@ const DEFAULT_PROMPT = [
 ].join('\n');
 
 const selectCls =
-  'flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:border-indigo-500 focus-visible:ring-4 focus-visible:ring-indigo-500/20';
+  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:border-emerald-500 focus-visible:ring-4 focus-visible:ring-emerald-500/20';
 
 export default function AgentConfig() {
   const [form, setForm] = useState({
