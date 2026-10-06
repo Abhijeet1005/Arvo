@@ -55,6 +55,33 @@
     --ring: 160 84% 39%;
   }
 
+  /* Arvo Lending is intentionally a separate product surface. Descendant
+     semantic tokens stay light and neutral even when the support dashboard is
+     using its warm theme. Explicit cobalt/teal utilities carry product state. */
+  .loan-product {
+    color-scheme: light;
+    --background: 216 33% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 32% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 214 32% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 214 32% 94%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 27% 91%;
+    --input: 214 25% 86%;
+    --ring: 221 83% 53%;
+    --radius: 0.875rem;
+  }
+
   * { border-color: hsl(var(--border)); }
 
   body {

@@ -69,6 +69,11 @@ export function TopLoader() {
     []
   );
 
+  // Arvo Lending has its own route-level experience and transitions. The
+  // support-app emerald loader would leak the wrong product identity there.
+  // Hooks above still run unconditionally, so this return is hook-safe.
+  if (pathname?.startsWith('/loan')) return null;
+
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 z-[100] h-0.5">
       <div

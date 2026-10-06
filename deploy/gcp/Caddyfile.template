@@ -1,0 +1,51 @@
+{
+	# Firewall only opens TCP 80/443, so don't advertise HTTP/3 (UDP).
+	servers {
+		protocols h1 h2
+	}
+}
+
+__DOMAIN__ {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Customer-facing surface: the share-link call room, its static assets,
+	# and the token-gated APIs it calls. Tokens are 22-char random values and
+	# the API routes re-validate them (expiry/revocation) on every request.
+	@public path /loan/call/* /_next/static/* /favicon.ico /api/loan/links/*/public /api/loan/links/*/session
+
+	# The customer page registers its call in the operator log (POST only;
+	# reading or deleting calls stays behind the login).
+	@publicCallLog {
+		method POST
+		path /api/loan/calls
+	}
+
+	handle @public {
+		reverse_proxy 127.0.0.1:3000
+	}
+
+	handle @publicCallLog {
+		reverse_proxy 127.0.0.1:3000
+	}
+
+	# Everything else is the operator console (dashboards, configuration,
+	# call data, API keys) and requires the operator login.
+	handle {
+		basic_auth {
+			admin __ADMIN_HASH__
+		}
+		reverse_proxy 127.0.0.1:3000
+	}
+}
+
+# Anyone typing the bare IP lands on the HTTPS hostname.
+http://__PUBLIC_IP__ {
+	redir https://__DOMAIN__{uri} permanent
+}

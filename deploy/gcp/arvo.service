@@ -1,0 +1,39 @@
+[Unit]
+Description=Arvo (Next.js standalone server)
+After=network-online.target
+Wants=network-online.target
+# Stays idle until the first release has been deployed.
+ConditionPathExists=/opt/arvo/current/server.js
+# Never give up restarting.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=arvo
+Group=arvo
+WorkingDirectory=/opt/arvo/current
+# Only the secrets the app reads (ELEVENLABS_*); root-only file, read by
+# systemd before privileges are dropped.
+EnvironmentFile=/etc/arvo/arvo.env
+# Listen on localhost only: Caddy is the single public entry point (HTTPS,
+# operator login). The app is never reachable directly from the internet.
+Environment=NODE_ENV=production PORT=3000 HOSTNAME=127.0.0.1 NEXT_TELEMETRY_DISABLED=1
+ExecStart=/opt/node/bin/node /opt/arvo/current/server.js
+Restart=always
+RestartSec=3
+
+# Hardening: the app may only write its data directory (/var/lib/arvo holds
+# agent.json and the Next.js cache; releases link to it).
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/arvo
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,8 @@
+[Unit]
+Description=Arvo network watchdog check
+After=NetworkManager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/arvo-netwatch
+TimeoutStartSec=150

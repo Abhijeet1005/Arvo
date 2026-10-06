@@ -1,0 +1,14 @@
+{
+	# Local network only: skip the automatic HTTPS/ACME machinery entirely.
+	auto_https off
+	admin off
+}
+
+# One shared entry point on :80, one path prefix per app — reachable from any
+# device on the network at http://raspi.local/<app>/ with no DNS/hosts-file
+# setup. Each app's own route lives in apps.conf (one line per app, appended
+# by deploy-app.ps1); this file itself never needs to change again.
+:80 {
+	import apps.conf
+	respond "Arvo Pi — no app matched this path." 404
+}

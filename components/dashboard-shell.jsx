@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Bot, BookOpen, Plug, PhoneCall, Settings, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Bot, BookOpen, Plug, PhoneCall, Landmark, Settings, Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -13,6 +13,7 @@ const NAV = [
   { label: 'Knowledge base', icon: BookOpen, href: '/knowledge' },
   { label: 'Connectors', icon: Plug, href: '/connectors' },
   { label: 'Test call', icon: PhoneCall, href: '/test' },
+  { label: 'Loan advisor', icon: Landmark, href: '/loan' },
   { label: 'Settings', icon: Settings, href: '/settings' },
 ];
 
@@ -22,6 +23,7 @@ const TITLES = {
   '/knowledge': ['Knowledge base', 'Docs the agent answers from'],
   '/connectors': ['Connectors', 'Live data the agent can read'],
   '/test': ['Test call', 'Talk to your agent live'],
+  '/loan': ['Loan advisor', 'Hinglish outbound caller for loan enquiries'],
   '/settings': ['Settings', 'Workspace & account'],
 };
 
@@ -41,6 +43,11 @@ export function DashboardShell({ children }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname() || '/';
   const [title, subtitle] = TITLES[pathname] || ['Dashboard', ''];
+
+  // Arvo Lending is a standalone product with its own operator shell and a
+  // separate customer call room. Never wrap any /loan route in the support
+  // dashboard navigation.
+  if (pathname.startsWith('/loan')) return children;
 
   return (
     <div className="min-h-screen">

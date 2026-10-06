@@ -1,0 +1,35 @@
+[Unit]
+Description=Arvo voice agent (Next.js)
+After=network-online.target
+Wants=network-online.target
+# Stays idle until the app has been deployed to /opt/arvo/app.
+ConditionPathExists=/opt/arvo/app/server.js
+# Never give up restarting.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=raspi
+Group=raspi
+WorkingDirectory=/opt/arvo/app
+EnvironmentFile=-/opt/arvo/.env
+Environment=NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
+Environment=NODE_OPTIONS=--max-old-space-size=256
+ExecStart=/opt/node/bin/node server.js
+Restart=always
+RestartSec=5
+
+# 1 GB Pi: leave room for the desktop and VNC. If the app ever grows past
+# this it is restarted, instead of the whole Pi running out of memory.
+MemoryHigh=380M
+MemoryMax=450M
+
+# Basic hardening.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/opt/arvo
+
+[Install]
+WantedBy=multi-user.target

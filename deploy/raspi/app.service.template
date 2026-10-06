@@ -1,0 +1,31 @@
+[Unit]
+Description=Arvo Pi app: __NAME__ (Next.js)
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/opt/apps/__NAME__/server.js
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=raspi
+Group=raspi
+WorkingDirectory=/opt/apps/__NAME__
+EnvironmentFile=-/opt/apps/__NAME__/.env
+Environment=NODE_ENV=production PORT=__PORT__ HOSTNAME=127.0.0.1
+Environment=NODE_OPTIONS=--max-old-space-size=256
+ExecStart=/opt/node/bin/node server.js
+Restart=always
+RestartSec=5
+
+# Keep one app's memory spike from starving the others on a 1 GB board.
+MemoryHigh=320M
+MemoryMax=400M
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/opt/apps/__NAME__
+
+[Install]
+WantedBy=multi-user.target
