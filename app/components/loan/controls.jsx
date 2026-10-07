@@ -123,14 +123,14 @@ export function SelectBox({ id, value, onChange, children, described, ...props }
 }
 
 // Range slider with its current value shown next to the label.
-export function Slider({ id, label, value, onChange, min, max, step, format = (v) => v, hint, left, right }) {
+export function Slider({ id, label, value, onChange, min, max, step, format = (v) => v, hint, left, right, disabled }) {
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between gap-2">
-        <label htmlFor={id} className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <label htmlFor={id} className={cn('text-xs font-semibold uppercase tracking-wide text-muted-foreground', disabled && 'opacity-60')}>
           {label}
         </label>
-        <span className="text-xs font-semibold tabular-nums">{format(value)}</span>
+        <span className={cn('text-xs font-semibold tabular-nums', disabled && 'opacity-50')}>{format(value)}</span>
       </div>
       <div className="flex items-center gap-3">
         {left && <span className="text-[11px] text-muted-foreground">{left}</span>}
@@ -141,10 +141,11 @@ export function Slider({ id, label, value, onChange, min, max, step, format = (v
           max={max}
           step={step}
           value={value}
+          disabled={disabled}
           onChange={(e) => onChange(Number(e.target.value))}
           aria-valuetext={String(format(value))}
           aria-describedby={hint ? `${id}-hint` : undefined}
-          className="h-1.5 flex-1 cursor-pointer accent-blue-600"
+          className={cn('h-1.5 flex-1 cursor-pointer accent-blue-600', disabled && 'cursor-not-allowed opacity-40')}
         />
         {right && <span className="text-[11px] text-muted-foreground">{right}</span>}
       </div>

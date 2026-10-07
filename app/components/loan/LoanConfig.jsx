@@ -13,6 +13,7 @@ import {
   RotateCcw,
   Save,
   ShieldCheck,
+  Sparkles,
   Timer,
   TriangleAlert,
   Undo2,
@@ -28,7 +29,9 @@ import {
   TURN_TIMEOUT,
   PROVIDER_ORDER,
   AGENT_GENDERS,
+  NATURAL_PRESET,
   settingsEqual,
+  supportsSpeed,
   ttsModelFor,
   unknownPlaceholders,
 } from '@/lib/loan/options';
@@ -185,6 +188,20 @@ export default function LoanConfig({ saved, defaults, options, onSaved, onOption
 
   const bind = (key) => (value) => update(key, value);
 
+  // Loads the recommended delivery settings into the draft. Leaves the persona,
+  // voice, language and model choice alone, and nothing goes live until Save.
+  function applyRecommended() {
+    const next = { ...form, ...NATURAL_PRESET, ttsModel: ttsModelFor(form.language, NATURAL_PRESET.ttsModel) };
+    if (settingsEqual(next, form)) {
+      setStatus({ kind: 'ok', text: 'Already using the recommended delivery settings.' });
+      return;
+    }
+    setForm(next);
+    setStatus(null);
+  }
+
+  const paceLocked = !supportsSpeed(form.ttsModel);
+
   async function save() {
     setSaving(true);
     setStatus(null);
@@ -302,18 +319,27 @@ export default function LoanConfig({ saved, defaults, options, onSaved, onOption
           )}
 
           {activeSection === 'voice' && (
-            <Section icon={AudioLines} title="Voice & delivery" description="Select the voice customers hear, then tune pace and consistency.">
+            <Section
+              icon={AudioLines}
+              title="Voice & delivery"
+              description="Select the voice customers hear, then tune pace and consistency."
+              aside={
+                <Button variant="outline" size="sm" onClick={applyRecommended} className="shrink-0">
+                  <Sparkles /> Use recommended
+                </Button>
+              }
+            >
               {voiceGenderMismatch && (
                 <VoiceGenderNotice voice={voiceGenderMismatch} speaksAs={speaksAs} onFix={() => update('agentGender', voiceGenderMismatch.gender)} />
               )}
               <VoicePicker value={form.voiceId} onChange={bind('voiceId')} voices={options?.voices} voicesError={options?.voicesError} tier={options?.subscription?.tier} language={form.language} onVoicesChanged={onOptionsReload} />
               <div className="grid gap-5 border-t border-border pt-5 sm:grid-cols-2">
-                <Control id="cfg-tts" label="Voice model" hint="Flash is the fastest (about 75 ms). v4 Turbo is more expressive at a similar speed (about 100 ms). v4, v3 and Multilingual are richer but add delay. Switching applies to the next call after you save.">
+                <Control id="cfg-tts" label="Voice model" hint="v4 Turbo is ElevenLabs' model for live agents: natural, expressive and quick to start. Flash is a touch faster but plainer. Multilingual v2 is rich and warm. v4 and v3 choose their own pace. Applies to the next call after you save.">
                   <SelectBox id="cfg-tts" value={form.ttsModel} onChange={bind('ttsModel')} described>{TTS_MODELS[form.language].map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</SelectBox>
                 </Control>
-                <Slider id="cfg-speed" label="Speaking pace" value={form.speed} onChange={bind('speed')} min={SPEED.min} max={SPEED.max} step={SPEED.step} format={(value) => `${value.toFixed(2)}×`} left="Slower" right="Faster" />
-                <Slider id="cfg-stability" label="Stability" value={form.stability} onChange={bind('stability')} min={0} max={1} step={0.05} format={(value) => value.toFixed(2)} left="Expressive" right="Steady" />
-                <Slider id="cfg-similarity" label="Voice similarity" value={form.similarityBoost} onChange={bind('similarityBoost')} min={0} max={1} step={0.05} format={(value) => value.toFixed(2)} left="Flexible" right="Closer" />
+                <Slider id="cfg-speed" label="Speaking pace" value={form.speed} onChange={bind('speed')} min={SPEED.min} max={SPEED.max} step={SPEED.step} format={(value) => `${value.toFixed(2)}×`} left="Slower" right="Faster" disabled={paceLocked} hint={paceLocked ? 'This voice model sets its own natural pace. Choose Flash, Turbo or Multilingual v2 to control it.' : 'About 1.0× is how people really talk on the phone.'} />
+                <Slider id="cfg-stability" label="Stability" value={form.stability} onChange={bind('stability')} min={0} max={1} step={0.05} format={(value) => value.toFixed(2)} left="Expressive" right="Steady" hint="0.40 to 0.50 keeps delivery lively but steady. Higher sounds flatter." />
+                <Slider id="cfg-similarity" label="Voice similarity" value={form.similarityBoost} onChange={bind('similarityBoost')} min={0} max={1} step={0.05} format={(value) => value.toFixed(2)} left="Flexible" right="Closer" hint="Very high values can add distortion." />
               </div>
             </Section>
           )}
@@ -352,9 +378,18 @@ export default function LoanConfig({ saved, defaults, options, onSaved, onOption
 
           {activeSection === 'behavior' && (
             <Section icon={Timer} title="Call behavior" description="Tune turn-taking and hard limits so the agent feels patient without leaving calls open indefinitely.">
+              <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                <Toggle
+                  id="cfg-natural"
+                  label="Natural conversation tuning"
+                  description="Ignores “haan” and “hmm” while the agent is speaking, filters background voices, starts replying as the customer finishes, lets the opening line finish, recognises EMI, CIBIL and PAN better, and waits quietly when the customer says “ek minute”. Turn off to compare."
+                  checked={form.naturalTuning}
+                  onChange={bind('naturalTuning')}
+                />
+              </div>
               <div className="grid gap-6 sm:grid-cols-2">
-                <Slider id="cfg-turn-timeout" label="Check in after silence" value={form.turnTimeout} onChange={bind('turnTimeout')} min={TURN_TIMEOUT.min} max={TURN_TIMEOUT.max} step={1} format={(value) => `${value}s`} hint="How long the customer can stay quiet before the agent checks whether they are still there." />
-                <Control id="cfg-eagerness" label="Turn-taking"><SelectBox id="cfg-eagerness" value={form.turnEagerness} onChange={bind('turnEagerness')}>{TURN_EAGERNESS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</SelectBox></Control>
+                <Slider id="cfg-turn-timeout" label="Check in after silence" value={form.turnTimeout} onChange={bind('turnTimeout')} min={TURN_TIMEOUT.min} max={TURN_TIMEOUT.max} step={1} format={(value) => `${value}s`} hint="How long the customer can stay quiet before the agent checks whether they are still there. People pause to think or find a document, so about 8 seconds feels patient without being awkward." />
+                <Control id="cfg-eagerness" label="Turn-taking" hint="Normal suits most calls. Patient waits longer, which helps when a customer reads out numbers slowly."><SelectBox id="cfg-eagerness" value={form.turnEagerness} onChange={bind('turnEagerness')} described>{TURN_EAGERNESS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</SelectBox></Control>
                 <Control id="cfg-silence" label="Hang up after silence"><SelectBox id="cfg-silence" value={String(form.silenceHangup)} onChange={(value) => update('silenceHangup', Number(value))}>{SILENCE_HANGUP.map((seconds) => <option key={seconds} value={String(seconds)}>{secondsLabel(seconds)}</option>)}</SelectBox></Control>
                 <Control id="cfg-max" label="Maximum call length" hint="A hard safety cap for forgotten or stalled conversations."><SelectBox id="cfg-max" value={String(form.maxCallMinutes)} onChange={(value) => update('maxCallMinutes', Number(value))} described>{MAX_CALL_MINUTES.map((minutes) => <option key={minutes} value={String(minutes)}>{minutes} minutes</option>)}</SelectBox></Control>
               </div>
