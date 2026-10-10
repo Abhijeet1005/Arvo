@@ -10,19 +10,28 @@ import {
   Link2,
   Menu,
   MessageSquareText,
+  Rocket,
   ShieldCheck,
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+export const DEFAULT_VIEW = 'demos';
+
 export const LOAN_VIEWS = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { id: 'demos', label: 'Demo factory', icon: Rocket },
+  { id: 'overview', label: 'Loan overview', icon: LayoutDashboard },
   { id: 'conversations', label: 'Conversations', icon: MessageSquareText },
   { id: 'experiences', label: 'Share experiences', icon: Link2 },
   { id: 'agent', label: 'Agent Studio', icon: Bot },
 ];
 
 const VIEW_META = {
+  demos: {
+    eyebrow: 'Demo factory',
+    title: 'Demos',
+    description: 'A branded AI voice agent and a link for every company you pitch.',
+  },
   overview: {
     eyebrow: 'Workspace overview',
     title: 'Loan qualification',
@@ -66,7 +75,7 @@ function BrandMark({ compact = false }) {
 
 function Navigation({ activeView, onNavigate, onDone }) {
   return (
-    <nav className="space-y-1" aria-label="Lending workspace">
+    <nav className="space-y-1" aria-label="Workspace">
       {LOAN_VIEWS.map((item) => {
         const Icon = item.icon;
         const active = activeView === item.id;
@@ -104,7 +113,7 @@ function ProductIdentity({ settings }) {
         <div className="flex items-center gap-1.5">
           <span className="text-[15px] font-semibold tracking-[-0.02em] text-white">Arvo</span>
           <span className="text-slate-600">/</span>
-          <span className="text-[13px] font-medium text-slate-300">Lending</span>
+          <span className="text-[13px] font-medium text-slate-300">Studio</span>
         </div>
         <p className="mt-1 truncate text-[11px] text-slate-500">{settings?.companyName || 'Loan workspace'}</p>
       </div>
@@ -212,10 +221,12 @@ export default function LoanProductShell({ activeView, onNavigate, settings, key
 
         <div className="mt-7 rounded-2xl border border-blue-400/10 bg-blue-500/[0.07] p-3.5">
           <div className="flex items-center gap-2 text-xs font-semibold text-blue-200">
-            <ShieldCheck className="size-4 text-blue-400" /> Conversation policy set
+            <ShieldCheck className="size-4 text-blue-400" /> {activeView === 'demos' ? 'Safeguards on every demo' : 'Conversation policy set'}
           </div>
           <p className="mt-2 text-[11px] leading-[1.55] text-slate-500">
-            The agent is instructed not to promise rates or approvals, and to stop customers from sharing sensitive credentials.
+            {activeView === 'demos'
+              ? 'Each demo agent says it is an AI, answers only from what you gave it, never takes card details or OTPs, and has a cap on calls and minutes.'
+              : 'The agent is instructed not to promise rates or approvals, and to stop customers from sharing sensitive credentials.'}
           </p>
         </div>
 

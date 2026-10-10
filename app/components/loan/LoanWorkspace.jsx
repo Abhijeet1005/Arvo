@@ -7,8 +7,9 @@ import LoanResults from './LoanResults';
 import LoanConfig from './LoanConfig';
 import LoanLinks from './LoanLinks';
 import LoanOverview from './LoanOverview';
-import LoanProductShell, { LOAN_VIEWS } from './LoanProductShell';
+import LoanProductShell, { LOAN_VIEWS, DEFAULT_VIEW } from './LoanProductShell';
 import LoanSetupSummary from './LoanSetupSummary';
+import DemoStudio from './DemoStudio';
 import { PreviewProvider } from './controls';
 
 const POLL_EVERY_MS = 3000;
@@ -18,11 +19,11 @@ const VIEW_IDS = new Set(LOAN_VIEWS.map((view) => view.id));
 const LEGACY_TAB_TO_VIEW = { call: 'conversations', links: 'experiences', config: 'agent' };
 
 function viewFromLocation() {
-  if (typeof window === 'undefined') return 'overview';
+  if (typeof window === 'undefined') return DEFAULT_VIEW;
   const params = new URLSearchParams(window.location.search);
   const requested = params.get('view');
   if (VIEW_IDS.has(requested)) return requested;
-  return LEGACY_TAB_TO_VIEW[params.get('tab')] || 'overview';
+  return LEGACY_TAB_TO_VIEW[params.get('tab')] || DEFAULT_VIEW;
 }
 
 function LoadingState({ activeView, onNavigate }) {
@@ -61,7 +62,7 @@ export default function LoanWorkspace() {
   const [options, setOptions] = useState(null);
   const [activeLinkCount, setActiveLinkCount] = useState(null);
   const [loadErr, setLoadErr] = useState('');
-  const [view, setView] = useState('overview');
+  const [view, setView] = useState(DEFAULT_VIEW);
   const polling = useRef(new Set());
   const mounted = useRef(true);
 
@@ -135,7 +136,7 @@ export default function LoanWorkspace() {
     setView(nextView);
     const url = new URL(window.location.href);
     url.searchParams.delete('tab');
-    if (nextView === 'overview') url.searchParams.delete('view');
+    if (nextView === DEFAULT_VIEW) url.searchParams.delete('view');
     else url.searchParams.set('view', nextView);
     window.history.pushState(null, '', url);
   }, []);
@@ -153,8 +154,9 @@ export default function LoanWorkspace() {
       try {
         setLoadErr('');
         const body = await loadData();
+        // Demo calls are followed by the Demos view itself.
         body.calls
-          .filter((call) => !FINAL.has(call.status))
+          .filter((call) => !call.demoId && !FINAL.has(call.status))
           .slice(0, 5)
           .forEach((call) => track(call.id));
       } catch (error) {
@@ -219,7 +221,10 @@ export default function LoanWorkspace() {
 
   if (!data) return <LoadingState activeView={view} onNavigate={selectView} />;
 
-  const { settings, agent, calls } = data;
+  const { settings, agent } = data;
+  // Calls made through demo links belong to the Demos view, not to the loan
+  // advisor's own numbers.
+  const calls = data.calls.filter((call) => !call.demoId);
   const keyConfigured = options?.key?.configured ?? agent.key?.configured;
   const voiceMissing = Array.isArray(options?.voices) && !options.voices.some((voice) => voice.id === settings.voiceId);
 
@@ -240,6 +245,8 @@ export default function LoanWorkspace() {
             <span className="hidden self-center text-xs font-semibold sm:block">Open setup →</span>
           </button>
         )}
+
+        {view === 'demos' && <DemoStudio options={options} settings={settings} />}
 
         {view === 'overview' && (
           <LoanOverview

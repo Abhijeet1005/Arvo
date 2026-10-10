@@ -1,42 +1,44 @@
 // Public, unauthenticated route — the link an operator hands to a customer
 // (see app/components/loan/LoanLinks.jsx). No dashboard chrome renders here;
 // components/dashboard-shell.jsx already bypasses itself for this path.
-import { headers } from 'next/headers';
+//
+// Demo links (see lib/demos) can also be served from here, so a deployment
+// whose proxy only exposes this path can still use them; app/d/[token] is the
+// shorter address for the same page.
 import PublicCallPage, { LinkUnavailable } from '@/app/components/loan/PublicCallPage';
+import DemoCallPage, { DemoUnavailable } from '@/app/components/loan/DemoCallPage';
+import { loadPublicLink, unavailableReason } from '@/lib/loan/publicLink';
 
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata() {
+export async function generateMetadata({ params }) {
   // Deliberately generic — never puts the customer's name in the tab title
-  // or any OG data that could leak into a link preview.
-  return { title: 'Loan Advisor', description: 'A quick call about your loan enquiry.' };
-}
-
-// Server components can't call their own relative API routes without an
-// absolute URL — build one from the incoming request's own host, so this
-// works identically on localhost and once deployed, with no hardcoded origin.
-async function fetchPublicLink(token) {
-  try {
-    const h = await headers();
-    const host = h.get('host');
-    if (!host) return { ok: false, status: 503, data: {} };
-    const proto = h.get('x-forwarded-proto') || (host.startsWith('localhost') ? 'http' : 'https');
-    const res = await fetch(`${proto}://${host}/api/loan/links/${token}/public`, { cache: 'no-store' });
-    const data = await res.json().catch(() => ({}));
-    return { ok: res.ok, status: res.status, data };
-  } catch {
-    return { ok: false, status: 503, data: {} };
+  // or any OG data that could leak into a link preview. A demo link is for a
+  // company, so its tab can carry the company's name.
+  const { token } = await params;
+  const result = await loadPublicLink(token).catch(() => null);
+  if (result?.ok && result.data.demo) {
+    return {
+      title: `${result.data.demo.businessName} · AI voice assistant`,
+      description: 'A live demo of an AI voice assistant.',
+      robots: { index: false, follow: false },
+      referrer: 'no-referrer',
+    };
   }
+  return { title: 'Loan Advisor', description: 'A quick call about your loan enquiry.', robots: { index: false, follow: false }, referrer: 'no-referrer' };
 }
 
 export default async function PublicLoanCallPage({ params }) {
   const { token } = await params;
-  const { ok, status, data } = await fetchPublicLink(token);
+  const result = await loadPublicLink(token).catch(() => ({ ok: false, status: 503 }));
 
-  if (!ok) {
-    const reason = status === 410 && ['expired', 'revoked'].includes(data.reason) ? data.reason : status === 400 || status === 404 ? 'invalid' : 'unavailable';
-    return <LinkUnavailable reason={reason} />;
+  if (!result.ok) {
+    const reason = unavailableReason(result);
+    return result.kind === 'demo' ? <DemoUnavailable reason={reason} /> : <LinkUnavailable reason={reason} />;
   }
+
+  const { data } = result;
+  if (data.demo) return <DemoCallPage token={token} demo={data.demo} full={Boolean(data.full)} />;
 
   return (
     <PublicCallPage

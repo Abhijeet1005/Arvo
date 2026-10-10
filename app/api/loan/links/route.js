@@ -21,9 +21,10 @@ function forDashboard(link) {
   return { ...rest, status: statusOf(link), callCount: callIds.length, url: urlFor(link.token) };
 }
 
-// All share links created so far (operator dashboard).
+// All share links created so far (operator dashboard). Links that belong to a
+// demo are managed in the Demos view instead.
 export async function GET() {
-  const links = await listShareLinks();
+  const links = (await listShareLinks()).filter((l) => !l.demoId);
   return NextResponse.json({ links: links.map(forDashboard) });
 }
 

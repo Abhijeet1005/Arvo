@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { refreshCall, removeCall, CONVERSATION_ID_RE } from '@/lib/loan/calls';
+import { removeCall, CONVERSATION_ID_RE } from '@/lib/loan/calls';
+import { refreshDemoCall } from '@/lib/demos/calls';
 import { friendlyError } from '@/lib/loan/elevenlabs';
 
 export const dynamic = 'force-dynamic';
@@ -12,7 +13,7 @@ export async function GET(_req, { params }) {
     return NextResponse.json({ error: 'Invalid call id.' }, { status: 400 });
   }
   try {
-    const call = await refreshCall(id);
+    const call = await refreshDemoCall(id);
     if (!call) return NextResponse.json({ error: 'Call not found.' }, { status: 404 });
     return NextResponse.json({ call });
   } catch (e) {

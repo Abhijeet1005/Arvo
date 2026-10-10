@@ -16,7 +16,8 @@ export async function GET() {
     keyStatus(),
     currentAgentId(),
   ]);
-  return NextResponse.json({ settings, defaults: defaultSettings(), agent: { id: agentId, key }, calls });
+  // Calls made through demo links are shown in the Demos view (/api/demos/calls).
+  return NextResponse.json({ settings, defaults: defaultSettings(), agent: { id: agentId, key }, calls: calls.filter((call) => !call.demoId) });
 }
 
 // Save settings. They're pushed to the ElevenLabs agent first and only
