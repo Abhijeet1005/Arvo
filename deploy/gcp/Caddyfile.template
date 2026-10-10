@@ -15,10 +15,12 @@ __DOMAIN__ {
 		-Server
 	}
 
-	# Customer-facing surface: the share-link call room, its static assets,
+	# Customer-facing surface: the share-link call room (/loan/call/... for a
+	# loan customer, /d/... for a company trying a demo), its static assets,
 	# and the token-gated APIs it calls. Tokens are 22-char random values and
-	# the API routes re-validate them (expiry/revocation) on every request.
-	@public path /loan/call/* /_next/static/* /favicon.ico /api/loan/links/*/public /api/loan/links/*/session
+	# the API routes re-validate them (expiry/revocation/call limits) on every
+	# request. The result route only answers for a call made on that very link.
+	@public path /loan/call/* /d/* /_next/static/* /favicon.ico /api/loan/links/*/public /api/loan/links/*/session /api/loan/links/*/result
 
 	# The customer page registers its call in the operator log (POST only;
 	# reading or deleting calls stays behind the login).

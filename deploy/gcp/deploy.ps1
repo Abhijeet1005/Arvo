@@ -6,10 +6,15 @@
   Every later code update:
     powershell -ExecutionPolicy Bypass -File deploy\gcp\deploy.ps1
 
-    -Provision  install/refresh Node, Caddy and the systemd unit, and set a
-                NEW operator password (printed once, saved locally)
-    -SyncEnv    copy ELEVENLABS_* values from .env.local to the server
-    -SeedData   copy .agent.json to the server, only if it has none yet
+    -Provision    install/refresh Node, Caddy and the systemd unit, and set a
+                  NEW operator password (printed once, saved locally)
+    -SyncEnv      copy ELEVENLABS_*, ARVO_NOTIFY_WEBHOOK and ARVO_CALL_PATH
+                  from .env.local to the server
+    -SeedData     copy .agent.json to the server, only if it has none yet
+    -UpdateProxy  re-render the Caddy config from Caddyfile.template (keeps
+                  the current operator login; backs up, validates, checks the
+                  result and restores the old config if a check fails). Needed
+                  once to make demo links (/d/...) public.
 
   What it does: uploads only the source needed to build (never secrets),
   builds on the server (Linux), switches the live release, health-checks it,
@@ -31,6 +36,7 @@ param(
   [switch]$Provision,
   [switch]$SyncEnv,
   [switch]$SeedData,
+  [switch]$UpdateProxy,
   [string]$Account = $env:ARVO_GCP_ACCOUNT,
   [string]$Project = $env:ARVO_GCP_PROJECT,
   [string]$Region = 'asia-south1',
@@ -118,8 +124,8 @@ try {
 
   # ---- 2. Secrets: only what the app reads ---------------------------------
   if ($SyncEnv) {
-    Say 'Syncing ELEVENLABS_* settings'
-    $allowed = 'ELEVENLABS_API_KEY', 'ELEVENLABS_AGENT_ID', 'ELEVENLABS_VOICE_ID'
+    Say 'Syncing ELEVENLABS_*, ARVO_NOTIFY_WEBHOOK and ARVO_CALL_PATH settings'
+    $allowed = 'ELEVENLABS_API_KEY', 'ELEVENLABS_AGENT_ID', 'ELEVENLABS_VOICE_ID', 'ARVO_NOTIFY_WEBHOOK', 'ARVO_CALL_PATH'
     $envLines = foreach ($line in Get-Content (Join-Path $ProjectDir '.env.local')) {
       if ($line -match '^\s*([A-Z0-9_]+)\s*=\s*(\S.*?)\s*$' -and $allowed -contains $Matches[1]) { "$($Matches[1])=$($Matches[2])" }
     }
@@ -161,17 +167,36 @@ try {
   Say 'Building and releasing on the server (a few minutes)'
   Invoke-Remote 'bash /tmp/release.sh; rc=$?; rm -f /tmp/release.sh; exit $rc'
 
-  # ---- 5. Verify through the public HTTPS endpoint --------------------------
+  # ---- 5. Proxy: make demo links public (only when asked) ------------------
+  # After the release, so /d/... already exists on the app when it opens up.
+  if ($UpdateProxy) {
+    Say 'Updating the proxy (keeps the operator login; restores the old config if a check fails)'
+    foreach ($name in 'proxy.sh', 'Caddyfile.template') {
+      $copy = Join-Path $staging $name
+      Write-Lf $copy (Get-Content (Join-Path $PSScriptRoot $name) -Raw)
+      Send-File $copy "/tmp/$name"
+    }
+    Invoke-Remote "sudo bash /tmp/proxy.sh $domain $ip; rc=`$?; rm -f /tmp/proxy.sh /tmp/Caddyfile.template; exit `$rc"
+  }
+
+  # ---- 6. Verify through the public HTTPS endpoint --------------------------
   Say "Checking https://$domain"
-  $console = ''; $customer = ''
+  $console = ''; $customer = ''; $demo = ''
   for ($i = 0; $i -lt 30; $i++) {
     $console = (& curl.exe -s -o NUL -w '%{http_code}' --max-time 15 "https://$domain/loan")
     $customer = (& curl.exe -s -o NUL -w '%{http_code}' --max-time 15 "https://$domain/loan/call/not-a-real-link")
-    if ($console -eq '401' -and $customer -eq '200') { break }
+    $demo = (& curl.exe -s -o NUL -w '%{http_code}' --max-time 15 "https://$domain/d/not-a-real-link")
+    if ($console -eq '401' -and $customer -eq '200' -and ($demo -eq '200' -or -not $UpdateProxy)) { break }
     Start-Sleep -Seconds 5
   }
   if ($console -ne '401' -or $customer -ne '200') {
     throw "Public check failed: console=$console (expected 401), customer page=$customer (expected 200)."
+  }
+  if ($UpdateProxy -and $demo -ne '200') {
+    throw "Public check failed: demo page=$demo (expected 200)."
+  }
+  if (-not $UpdateProxy -and $demo -eq '401') {
+    Write-Host "Note: demo links (/d/...) still ask for the operator login. Run once with -UpdateProxy, or set ARVO_CALL_PATH=/loan/call and -SyncEnv to use the older public path." -ForegroundColor Yellow
   }
 
   Write-Host ''
