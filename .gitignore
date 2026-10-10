@@ -15,3 +15,8 @@ build/
 # Personal deploy settings (Google Cloud account/project); copy the
 # *.example.json next to it to create your own.
 deploy/**/*.local.json
+
+# Prospect lists: contact details of real businesses. Keep them local.
+real_estate_leads*.csv
+leads/
+prospects*.csv
