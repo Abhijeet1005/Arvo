@@ -33,7 +33,7 @@ import DemoImport from './DemoImport';
 import { downloadCsv } from '@/lib/demos/download';
 import { brand } from '@/lib/demos/color';
 import { publicResult } from '@/lib/demos/model';
-import { durationLabel, expiryLabel, outcomeOf, pitchMessage, relativeTime, TONE_CLASSES, whatsappUrl } from '@/lib/demos/ui';
+import { durationLabel, expiryLabel, isLeadOutcome, leadText, outcomeOf, pitchMessage, relativeTime, TONE_CLASSES, whatsappUrl } from '@/lib/demos/ui';
 import { cn } from '@/lib/utils';
 
 const REFRESH_MS = 8000;
@@ -281,6 +281,7 @@ function DemoCard({ demo, templates, industries, languages, origin, highlight, o
               {demo.templateId === 'assistant' && industry && <Chip>{industry.label}</Chip>}
               <Chip>{language?.label || demo.agent.language}</Chip>
               <Chip>{demo.agent.name}</Chip>
+              {(demo.delivery?.emails || []).length > 0 && <Chip>Leads emailed</Chip>}
             </div>
           </div>
         </div>
@@ -373,6 +374,8 @@ function ActivityRow({ call, onRemove }) {
             </span>
           )}
           {who && <span className="truncate text-xs text-slate-600">{who}</span>}
+          {call.leadMail === 'sent' && <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-teal-700"><Check className="size-3" /> Emailed to client</span>}
+          {call.leadMail === 'failed' && <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-red-700"><TriangleAlert className="size-3" /> Email not sent</span>}
           {flagged && <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700"><TriangleAlert className="size-3" /> Check the answers</span>}
         </div>
         <ChevronDown className={cn('hidden size-4 text-slate-400 transition-transform sm:block', open && 'rotate-180')} aria-hidden="true" />
@@ -404,7 +407,18 @@ function ActivityRow({ call, onRemove }) {
             </ul>
           )}
           {call.error && <p className="text-xs text-red-700">{call.error}</p>}
-          <div className="flex justify-end">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            {card && isLeadOutcome(card.outcome) ? (
+              <a
+                href={whatsappUrl({ phone: '', language: 'en' }, leadText(call.businessName, card))}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open WhatsApp and choose who to send this lead to"
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 hover:border-teal-300 hover:text-teal-700"
+              >
+                <MessageCircle className="size-3.5" /> Send this lead on WhatsApp
+              </a>
+            ) : <span />}
             <button type="button" onClick={() => onRemove(call.id)} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-slate-400 hover:bg-red-50 hover:text-red-600">
               <Trash2 className="size-3" /> Remove from the log
             </button>
@@ -506,7 +520,7 @@ export default function DemoStudio({ options, settings }) {
       if (!demoResponse.ok) throw new Error(body.error || 'Could not load your demos.');
       const callBody = await callResponse.json().catch(() => ({}));
       if (!mounted.current) return;
-      setMeta({ templates: body.templates, industries: body.industries, languages: body.languages, keyConfigured: body.keyConfigured, alerts: body.alerts, callPath: body.callPath });
+      setMeta({ templates: body.templates, industries: body.industries, languages: body.languages, keyConfigured: body.keyConfigured, alerts: body.alerts, mail: body.mail, callPath: body.callPath });
       setDemos(body.demos);
       if (callResponse.ok) setCalls(callBody.calls || []);
       setLoadError('');

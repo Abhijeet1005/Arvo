@@ -30,6 +30,8 @@ Optional settings (environment):
 | Variable | Purpose |
 | --- | --- |
 | `ARVO_NOTIFY_WEBHOOK` | A Slack or Discord incoming-webhook URL. A message is sent when a demo call starts and when its summary is ready. |
+| `ARVO_SMTP_URL` | Turns on emailing leads to a client, for example `smtps://you%40gmail.com:app-password@smtp.gmail.com:465` (percent-encode special characters; with Gmail use an app password). Then add the client's addresses under **Send leads to the client** on the demo. Only calls that leave a name, number or callback request are sent. A failed send is retried once, and a lead that still fails shows as "Email not sent" in Activity. |
+| `ARVO_MAIL_FROM` | Optional sender for those emails, such as `Arvo <you@gmail.com>`. Defaults to the user in `ARVO_SMTP_URL`. |
 | `ARVO_CALL_PATH` | Where demo links live. Default `/d`. Set `/loan/call` if a proxy only exposes that path. |
 
 A reverse proxy in front of the operator console must let `/d/*`, `/api/loan/links/*/{public,session,result}` and `POST /api/loan/calls` through without a login, and keep everything else (including `/api/demos/*`) behind one. `deploy/gcp/Caddyfile.template` does exactly this.

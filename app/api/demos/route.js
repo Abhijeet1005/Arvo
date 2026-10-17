@@ -4,6 +4,7 @@ import { syncDemoAgent } from '@/lib/demos/agent';
 import { demoViews, demoViewById } from '@/lib/demos/overview';
 import { callPath } from '@/lib/demos/links';
 import { notificationsEnabled } from '@/lib/demos/notify';
+import { mailEnabled } from '@/lib/demos/mail';
 import { ensureSweeper } from '@/lib/demos/calls';
 import { TEMPLATES, INDUSTRIES, DEMO_LANGUAGES } from '@/lib/demos/templates';
 import { createShareLink } from '@/lib/loan/shareLinks';
@@ -23,6 +24,7 @@ export async function GET() {
     languages: DEMO_LANGUAGES,
     keyConfigured: key.configured,
     alerts: notificationsEnabled(),
+    mail: mailEnabled(),
     callPath: callPath(),
   });
 }

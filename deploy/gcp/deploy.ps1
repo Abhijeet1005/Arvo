@@ -124,8 +124,8 @@ try {
 
   # ---- 2. Secrets: only what the app reads ---------------------------------
   if ($SyncEnv) {
-    Say 'Syncing ELEVENLABS_*, ARVO_NOTIFY_WEBHOOK and ARVO_CALL_PATH settings'
-    $allowed = 'ELEVENLABS_API_KEY', 'ELEVENLABS_AGENT_ID', 'ELEVENLABS_VOICE_ID', 'ARVO_NOTIFY_WEBHOOK', 'ARVO_CALL_PATH'
+    Say 'Syncing ELEVENLABS_*, ARVO_NOTIFY_WEBHOOK, ARVO_SMTP_URL, ARVO_MAIL_FROM and ARVO_CALL_PATH settings'
+    $allowed = 'ELEVENLABS_API_KEY', 'ELEVENLABS_AGENT_ID', 'ELEVENLABS_VOICE_ID', 'ARVO_NOTIFY_WEBHOOK', 'ARVO_SMTP_URL', 'ARVO_MAIL_FROM', 'ARVO_CALL_PATH'
     $envLines = foreach ($line in Get-Content (Join-Path $ProjectDir '.env.local')) {
       if ($line -match '^\s*([A-Z0-9_]+)\s*=\s*(\S.*?)\s*$' -and $allowed -contains $Matches[1]) { "$($Matches[1])=$($Matches[2])" }
     }

@@ -4,7 +4,7 @@
 // call room looks. "Read website" fills most of it in from the company's own
 // site so a demo takes a couple of minutes, not an afternoon.
 import { useState } from 'react';
-import { ArrowLeft, Check, Globe, Loader2, Palette, Save, Sparkles, TriangleAlert, X } from 'lucide-react';
+import { ArrowLeft, Check, Globe, Loader2, Mail, Palette, Save, Sparkles, TriangleAlert, X } from 'lucide-react';
 import { Button, Input, Textarea, Control, SelectBox, Section } from './controls';
 import { brand } from '@/lib/demos/color';
 import { DEFAULT_NAMES, MAX_ABOUT } from '@/lib/demos/model';
@@ -21,6 +21,7 @@ function emptyForm(settings) {
     business: { name: '', website: '', tagline: '', services: '', hours: '', location: '', phone: '', email: '', about: '', logoUrl: '', accent: '' },
     agent: { name: '', gender: 'female', language: 'en', voiceId: '' },
     cta: { url: '', label: '' },
+    delivery: { emails: '' },
     lending: { partnerBanks: settings?.partnerBanks || '', regulatorLine: settings?.regulatorLine ?? '' },
     notes: '',
   };
@@ -41,6 +42,7 @@ function fromDemo(demo, settings) {
       voiceId: demo.agent.voiceId || '',
     },
     cta: { url: demo.cta?.url || '', label: demo.cta?.label || '' },
+    delivery: { emails: (demo.delivery?.emails || []).join(', ') },
     lending: { ...base.lending, ...(demo.lending || {}) },
     notes: demo.notes || '',
   };
@@ -53,6 +55,7 @@ function toBody(form) {
     business: { ...form.business, services: form.business.services.split('\n') },
     agent: { ...form.agent },
     cta: { ...form.cta },
+    delivery: { emails: form.delivery.emails },
     notes: form.notes,
   };
   if (form.templateId === 'lending') body.lending = { ...form.lending };
@@ -104,6 +107,8 @@ export default function DemoForm({ demo, meta, options, settings, onCancel, onSa
   const [readInfo, setReadInfo] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
 
   const lending = form.templateId === 'lending';
   const voices = Array.isArray(options?.voices) ? options.voices : [];
@@ -149,6 +154,22 @@ export default function DemoForm({ demo, meta, options, settings, onCancel, onSa
       setReadError(e.message || String(e));
     } finally {
       setReading(false);
+    }
+  }
+
+  // Mails a made-up lead to the addresses already saved on this demo.
+  async function sendTest() {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const response = await fetch(`/api/demos/${demo.id}/delivery/test`, { method: 'POST' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'The test email could not be sent.');
+      setTestResult({ ok: true, text: `Sent to ${(data.to || []).join(', ')}. Ask them to check the inbox and spam.` });
+    } catch (e) {
+      setTestResult({ ok: false, text: e.message || String(e) });
+    } finally {
+      setTesting(false);
     }
   }
 
@@ -420,6 +441,36 @@ export default function DemoForm({ demo, meta, options, settings, onCancel, onSa
             <Control id="demo-notes" label="Private note" hint="Only you see this.">
               <Input id="demo-notes" value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="e.g. Spoke to the owner, wants a demo on Friday" maxLength={300} />
             </Control>
+          </Section>
+
+          <Section title="Send leads to the client" description="For a pilot. Each call that leaves a name, number or callback request is emailed to these addresses. Leave empty while this is only a demo." icon={Mail}>
+            <Control id="demo-delivery" label="Email addresses" hint="Up to three, separated by commas.">
+              <Input
+                id="demo-delivery"
+                type="text"
+                inputMode="email"
+                value={form.delivery.emails}
+                onChange={(e) => set('delivery', 'emails', e.target.value)}
+                placeholder="owner@theircompany.com"
+                maxLength={400}
+              />
+            </Control>
+            {!meta?.mail && (
+              <p className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-900">
+                <TriangleAlert className="mt-0.5 size-3.5 shrink-0" /> Email is not set up on this server, so nothing will be sent yet. Set ARVO_SMTP_URL (see the README).
+              </p>
+            )}
+            {editing && meta?.mail && (
+              <div className="flex flex-wrap items-center gap-3">
+                <Button type="button" size="sm" variant="outline" onClick={sendTest} disabled={testing || !(demo.delivery?.emails || []).length}>
+                  {testing ? <Loader2 className="animate-spin" /> : <Mail />} Send a test lead
+                </Button>
+                <p className="text-[11px] text-slate-400">Goes to the addresses you last saved.</p>
+                {testResult && (
+                  <p role="status" className={cn('w-full text-xs', testResult.ok ? 'text-teal-700' : 'text-red-700')}>{testResult.text}</p>
+                )}
+              </div>
+            )}
           </Section>
         </div>
 
