@@ -1,15 +1,12 @@
 import { NextResponse } from 'next/server';
-import { createDemo } from '@/lib/demos/store';
-import { syncDemoAgent } from '@/lib/demos/agent';
+import { createDemoWithLink } from '@/lib/demos/create';
 import { demoViews, demoViewById } from '@/lib/demos/overview';
 import { callPath } from '@/lib/demos/links';
 import { notificationsEnabled } from '@/lib/demos/notify';
 import { mailEnabled } from '@/lib/demos/mail';
 import { ensureSweeper } from '@/lib/demos/calls';
 import { TEMPLATES, INDUSTRIES, DEMO_LANGUAGES } from '@/lib/demos/templates';
-import { createShareLink } from '@/lib/loan/shareLinks';
 import { keyStatus } from '@/lib/loan/settings';
-import { friendlyError } from '@/lib/loan/elevenlabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,24 +33,11 @@ export async function GET() {
 export async function POST(req) {
   const body = await req.json().catch(() => ({}));
   let demo;
+  let warning;
   try {
-    demo = await createDemo(body);
+    ({ demo, warning } = await createDemoWithLink(body));
   } catch (e) {
     return NextResponse.json({ error: e.message || 'Could not create the demo.' }, { status: 400 });
-  }
-
-  await createShareLink({ demoId: demo.id, label: 'Main link', expiresInDays: 30 });
-
-  let warning = '';
-  if (!(await keyStatus()).configured) {
-    warning = 'Saved. Add an ElevenLabs API key under Configuration to bring the agent online.';
-  } else {
-    try {
-      await syncDemoAgent(demo.id);
-    } catch (e) {
-      console.error('[demos] agent sync failed:', e);
-      warning = `Saved, but the agent is not live yet: ${friendlyError(e)}`;
-    }
   }
 
   return NextResponse.json({ ok: true, demo: await demoViewById(demo.id), ...(warning ? { warning } : {}) }, { status: 201 });

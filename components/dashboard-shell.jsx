@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Bot, BookOpen, Plug, PhoneCall, Landmark, Rocket, Settings, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Bot, BookOpen, Plug, PhoneCall, Landmark, Rocket, Radar, Settings, Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -13,6 +13,7 @@ const NAV = [
   { label: 'Knowledge base', icon: BookOpen, href: '/knowledge' },
   { label: 'Connectors', icon: Plug, href: '/connectors' },
   { label: 'Test call', icon: PhoneCall, href: '/test' },
+  { label: 'Autopilot', icon: Radar, href: '/autopilot' },
   { label: 'Demo factory', icon: Rocket, href: '/loan?view=demos' },
   { label: 'Loan advisor', icon: Landmark, href: '/loan' },
   { label: 'Settings', icon: Settings, href: '/settings' },
@@ -25,6 +26,7 @@ const TITLES = {
   '/connectors': ['Connectors', 'Live data the agent can read'],
   '/test': ['Test call', 'Talk to your agent live'],
   '/loan': ['Loan advisor', 'Hinglish outbound caller for loan enquiries'],
+  '/autopilot': ['Autopilot', 'Research, demos and outreach on their own'],
   '/settings': ['Settings', 'Workspace & account'],
 };
 

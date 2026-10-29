@@ -38,9 +38,15 @@ sudo cp -a .next/static "$RELEASE/.next/static"
 if [ -d public ]; then sudo cp -a public "$RELEASE/public"; fi
 # Releases are read-only to the app; persistent state lives outside them
 # (linked in afterwards) so a deploy never overwrites it.
-sudo rm -rf "$RELEASE/.agent.json" "$RELEASE/.next/cache"
+sudo rm -rf "$RELEASE/.agent.json" "$RELEASE/.autopilot.json" "$RELEASE/.next/cache"
 sudo chown -R root:root "$RELEASE"
 sudo ln -s /var/lib/arvo/agent.json "$RELEASE/.agent.json"
+# The autopilot's prospects. The file must exist: a save through a link that
+# points nowhere would try to write inside the read-only release.
+if ! sudo test -e /var/lib/arvo/autopilot.json; then
+  echo '{}' | sudo install -o arvo -g arvo -m 600 /dev/stdin /var/lib/arvo/autopilot.json
+fi
+sudo ln -s /var/lib/arvo/autopilot.json "$RELEASE/.autopilot.json"
 sudo ln -s /var/lib/arvo/next-cache "$RELEASE/.next/cache"
 
 echo "== switch + restart"

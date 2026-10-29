@@ -6,6 +6,7 @@ build/
 .env.local
 .env*.local
 .agent.json
+.autopilot.json
 *.log
 .DS_Store
 
