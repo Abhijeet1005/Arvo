@@ -155,7 +155,7 @@ try {
   # ---- 4. Source → build on the server → switch release ---------------------
   Say 'Packaging source'
   $include = @('app', 'components', 'lib', 'package.json', 'package-lock.json', 'next.config.js',
-    'jsconfig.json', 'postcss.config.js', 'tailwind.config.js', 'public') |
+    'instrumentation.js', 'jsconfig.json', 'postcss.config.js', 'tailwind.config.js', 'public') |
     Where-Object { Test-Path (Join-Path $ProjectDir $_) }
   $archive = Join-Path $staging 'arvo-src.tar.gz'
   & tar -czf $archive -C $ProjectDir @include
