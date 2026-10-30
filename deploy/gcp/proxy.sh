@@ -2,7 +2,7 @@
 # Re-render the Caddy config from the template, keeping the existing operator
 # login, and keep it only if it validates and the site still behaves.
 #
-#   sudo bash /tmp/proxy.sh <domain> <public-ip>
+#   sudo bash /tmp/proxy.sh <domain> <public-ip> [<also-serve>]
 #
 # Expects /tmp/Caddyfile.template (deploy\gcp\deploy.ps1 -UpdateProxy uploads
 # it). Unlike provision.sh this never sets a new password: the existing hash is
@@ -12,6 +12,12 @@ set -euo pipefail
 
 DOMAIN="${1:?domain required}"
 PUBLIC_IP="${2:?public ip required}"
+# Another hostname to serve as well (the sslip.io address once the server has
+# its own domain). The checks below go through it: it already has a
+# certificate, while a new domain's certificate may still be on its way.
+ALSO="${3:-}"
+SITES="$DOMAIN${ALSO:+, $ALSO}"
+CHECK_HOST="${ALSO:-$DOMAIN}"
 CONF=/etc/caddy/Caddyfile
 TEMPLATE=/tmp/Caddyfile.template
 
@@ -27,7 +33,7 @@ esac
 
 NEW="$(mktemp)"
 trap 'rm -f "$NEW" "$TEMPLATE"' EXIT
-sed -e "s|__DOMAIN__|$DOMAIN|g" -e "s|__PUBLIC_IP__|$PUBLIC_IP|g" -e "s|__ADMIN_HASH__|$HASH|g" "$TEMPLATE" > "$NEW"
+sed -e "s|__SITE_ADDRESSES__|$SITES|g" -e "s|__DOMAIN__|$DOMAIN|g" -e "s|__PUBLIC_IP__|$PUBLIC_IP|g" -e "s|__ADMIN_HASH__|$HASH|g" "$TEMPLATE" > "$NEW"
 caddy fmt --overwrite "$NEW"
 caddy validate --config "$NEW" --adapter caddyfile >/dev/null
 echo "   new config validates"
@@ -44,7 +50,7 @@ systemctl reload caddy
 sleep 2
 
 # Ask the proxy itself (on this machine, skipping DNS) how it routes things.
-code() { curl -sk -o /dev/null -w '%{http_code}' --max-time 10 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN$1" || true; }
+code() { curl -sk -o /dev/null -w '%{http_code}' --max-time 10 --resolve "$CHECK_HOST:443:127.0.0.1" "https://$CHECK_HOST$1" || true; }
 ok=true
 check() { # <path> <expected status> <what>
   local got; got="$(code "$1")"
@@ -65,6 +71,12 @@ if [ "$ok" != "true" ]; then
   systemctl reload caddy
   exit 1
 fi
+
+# The customer page's server render fetches its own public API by hostname;
+# resolve every served hostname locally so the request stays on this machine.
+for host in $DOMAIN $ALSO; do
+  grep -qE "^127\.0\.0\.1[[:space:]]+$host\$" /etc/hosts || echo "127.0.0.1 $host" >> /etc/hosts
+done
 
 # Keep the three newest backups.
 ls -1t "$CONF".bak-* 2>/dev/null | tail -n +4 | xargs -r rm -f

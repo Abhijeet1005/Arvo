@@ -100,7 +100,8 @@ export default function AutopilotSettings({ view, save, busy, reload }) {
             <Input value={s.sender.address} onChange={(e) => setIn('sender', { address: e.target.value })} maxLength={200} />
           </Field>
           <Field label="Public address of this dashboard (links point here)" className="sm:col-span-2">
-            <Input value={s.publicUrl} onChange={(e) => set({ publicUrl: e.target.value })} placeholder="https://your-domain" />
+            <Input value={s.publicUrl} onChange={(e) => set({ publicUrl: e.target.value })} placeholder="https://your-domain" disabled={c.publicUrlFromServer} />
+            {c.publicUrlFromServer && <span className="text-xs text-muted-foreground">Set by the server (ARVO_PUBLIC_URL).</span>}
           </Field>
         </CardContent>
       </Card>

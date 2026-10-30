@@ -5,7 +5,9 @@
 	}
 }
 
-__DOMAIN__ {
+# The site answers on the main address and, when the server has its own
+# domain, on the original sslip.io address too (old links keep working).
+__SITE_ADDRESSES__ {
 	encode zstd gzip
 
 	header {
