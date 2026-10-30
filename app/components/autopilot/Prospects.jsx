@@ -91,6 +91,7 @@ export default function Prospects({ view, reload }) {
                 {p.email && (
                   <span className="inline-flex items-center gap-1">
                     <Mail className="size-3" /> {p.email}
+                    {p.emailSource && <span>· found on {hostOf(p.emailSource)}</span>}
                   </span>
                 )}
                 {p.linkedin && (

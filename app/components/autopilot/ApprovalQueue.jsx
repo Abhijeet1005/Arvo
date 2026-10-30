@@ -52,6 +52,7 @@ function Draft({ p, settings, reload }) {
               {p.email && (
                 <span className="inline-flex items-center gap-1">
                   <Mail className="size-3.5" /> {p.email}
+                  {p.emailSource && <span>(found on {hostOf(p.emailSource)})</span>}
                 </span>
               )}
               {p.linkedin && (
