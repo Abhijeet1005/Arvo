@@ -96,8 +96,8 @@ export default function AutopilotSettings({ view, save, busy, reload }) {
           <Field label="Replies go to">
             <Input type="email" value={s.sender.replyTo} onChange={(e) => setIn('sender', { replyTo: e.target.value })} placeholder="Same as the sending address" />
           </Field>
-          <Field label="Postal address (shown in the footer)" className="sm:col-span-2">
-            <Input value={s.sender.address} onChange={(e) => setIn('sender', { address: e.target.value })} maxLength={200} />
+          <Field label="Postal address (optional; the law requires one only to email the US)" className="sm:col-span-2">
+            <Input value={s.sender.address} onChange={(e) => setIn('sender', { address: e.target.value })} maxLength={200} placeholder="Leave empty to skip US markets" />
           </Field>
           <Field label="Public address of this dashboard (links point here)" className="sm:col-span-2">
             <Input value={s.publicUrl} onChange={(e) => set({ publicUrl: e.target.value })} placeholder="https://your-domain" disabled={c.publicUrlFromServer} />
@@ -149,7 +149,7 @@ export default function AutopilotSettings({ view, save, busy, reload }) {
       <Card>
         <CardContent className="grid gap-4 p-5 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <SectionTitle>When it sends (India time)</SectionTitle>
+            <SectionTitle>When it sends (each recipient&apos;s local time)</SectionTitle>
           </div>
           <div className="flex flex-wrap gap-1.5 sm:col-span-2" role="group" aria-label="Send days">
             {DAYS.map((d, i) => (

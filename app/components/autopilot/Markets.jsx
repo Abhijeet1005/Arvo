@@ -44,7 +44,9 @@ function Market({ m, reload }) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 className="font-semibold">{m.vertical}</h3>
-            <p className="text-xs text-muted-foreground">{m.city}</p>
+            <p className="text-xs text-muted-foreground">
+              {m.city}, {m.countryName} · emails in local business hours ({m.timezone})
+            </p>
           </div>
           <select value={m.status} onChange={(e) => setStatus(e.target.value)} disabled={busy} className={selectClass} aria-label={`Status of ${m.vertical}`}>
             {STATUS.map((x) => (
@@ -70,6 +72,7 @@ function Market({ m, reload }) {
             </div>
           ))}
         </dl>
+        {m.block && <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">On hold: {m.block}</p>}
         {m.brief ? (
           <details>
             <summary className="cursor-pointer text-xs font-semibold text-muted-foreground">What research learned</summary>
@@ -84,8 +87,9 @@ function Market({ m, reload }) {
   );
 }
 
-function AddMarket({ reload }) {
-  const [form, setForm] = useState({ vertical: '', city: 'Delhi NCR', industry: 'generic' });
+function AddMarket({ countries, reload }) {
+  const [form, setForm] = useState({ vertical: '', city: '', country: 'IN', industry: 'generic' });
+  const country = countries.find((c) => c.code === form.country);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   async function add(e) {
@@ -106,12 +110,22 @@ function AddMarket({ reload }) {
     <Card>
       <CardContent className="p-5">
         <SectionTitle>Add a market</SectionTitle>
-        <form onSubmit={add} className="grid gap-3 sm:grid-cols-[2fr_1fr_1fr_auto] sm:items-end">
+        <form onSubmit={add} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_auto] lg:items-end">
           <Field label="Kind of business">
             <Input value={form.vertical} onChange={(e) => setForm({ ...form, vertical: e.target.value })} placeholder="e.g. Dental clinics" required maxLength={120} />
           </Field>
+          <Field label="Country">
+            <select value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} className={selectClass}>
+              {countries.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                  {c.needsAddress ? ' (needs postal address)' : ''}
+                </option>
+              ))}
+            </select>
+          </Field>
           <Field label="City or region">
-            <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required maxLength={80} />
+            <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="e.g. Manchester" required maxLength={80} />
           </Field>
           <Field label="Demo preset">
             <select value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} className={selectClass}>
@@ -127,7 +141,11 @@ function AddMarket({ reload }) {
           </Button>
         </form>
         {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+        {country?.rule && <p className="mt-3 text-xs text-muted-foreground">{country.name}: {country.rule}</p>}
         <p className="mt-3 text-xs text-muted-foreground">
+          Canada and the EU aren&apos;t offered: they need prior consent before any cold email, even between businesses.
+        </p>
+        <p className="mt-2 text-xs text-muted-foreground">
           New markets start as Testing. Each weekly review pauses markets with no response after 100 emails, promotes ones that do as well as the best, and may add one new market to test.
         </p>
       </CardContent>
@@ -141,7 +159,7 @@ export default function Markets({ view, reload }) {
       {view.markets.map((m) => (
         <Market key={m.id} m={m} reload={reload} />
       ))}
-      <AddMarket reload={reload} />
+      <AddMarket countries={view.countries} reload={reload} />
     </div>
   );
 }
