@@ -36,6 +36,7 @@ export default function AutopilotSettings({ view, save, busy, reload }) {
   const [s, setS] = useState(view.settings);
   const [saved, setSaved] = useState(false);
   const [requeue, setRequeue] = useState('');
+  const [testing, setTesting] = useState('');
   const c = view.config;
 
   const set = (patch) => (setSaved(false), setS((x) => ({ ...x, ...patch })));
@@ -59,6 +60,19 @@ export default function AutopilotSettings({ view, save, busy, reload }) {
     }
   }
 
+  async function sendTest() {
+    setTesting('Sending…');
+    try {
+      // Save first, so the test goes to the address on screen.
+      const { mode, ...rest } = s;
+      if (!(await save(rest))) return setTesting('');
+      const r = await api('/api/autopilot/notify-test', { method: 'POST' });
+      setTesting(`Sent (${r.sent.join(' and ')}). Check ${s.alertEmail || 'your inbox'}.`);
+    } catch (err) {
+      setTesting(err.message);
+    }
+  }
+
   const toggleDay = (d) => setIn('window', { days: s.window.days.includes(d) ? s.window.days.filter((x) => x !== d) : [...s.window.days, d].sort() });
 
   return (
@@ -71,7 +85,7 @@ export default function AutopilotSettings({ view, save, busy, reload }) {
             <Status ok={c.elevenlabs}>ElevenLabs key for building demos</Status>
             <Status ok={c.smtp}>Outreach mailbox for sending: ARVO_OUTREACH_SMTP_URL{c.sender ? ` (sends as ${c.sender})` : ''}</Status>
             <Status ok={c.imap}>Outreach mailbox for reading replies: ARVO_OUTREACH_IMAP_URL</Status>
-            <Status ok={c.alerts}>Alerts for hot prospects: ARVO_NOTIFY_WEBHOOK</Status>
+            <Status ok={c.webhook}>Optional Slack or Discord alerts too: ARVO_NOTIFY_WEBHOOK</Status>
           </ul>
           <p className="mt-3 text-xs text-muted-foreground">
             These live in the server&apos;s environment (.env.local here; deploy with -SyncEnv). Use a separate domain for outreach, with SPF, DKIM and DMARC set up, never your main one.
@@ -103,6 +117,24 @@ export default function AutopilotSettings({ view, save, busy, reload }) {
             <Input value={s.publicUrl} onChange={(e) => set({ publicUrl: e.target.value })} placeholder="https://your-domain" disabled={c.publicUrlFromServer} />
             {c.publicUrlFromServer && <span className="text-xs text-muted-foreground">Set by the server (ARVO_PUBLIC_URL).</span>}
           </Field>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-4 p-5">
+          <SectionTitle>Notifications</SectionTitle>
+          <p className="text-sm text-muted-foreground">
+            An email here when a prospect replies with interest or tries their demo, when something breaks, a summary in the evening (India time) when anything happened that day, and the weekly report. Sent from the outreach mailbox.
+          </p>
+          <div className="flex flex-wrap items-end gap-3">
+            <Field label="Send notifications to" className="min-w-[16rem] flex-1">
+              <Input type="email" value={s.alertEmail} onChange={(e) => set({ alertEmail: e.target.value })} placeholder="you@gmail.com" />
+            </Field>
+            <Button type="button" variant="outline" onClick={sendTest} disabled={busy || !s.alertEmail}>
+              Send a test
+            </Button>
+          </div>
+          {testing && <p className="text-sm text-muted-foreground">{testing}</p>}
         </CardContent>
       </Card>
 

@@ -58,7 +58,7 @@ function Setup({ view, onOpenSettings }) {
     !c.elevenlabs && 'Add the ElevenLabs API key (Loan advisor → Configuration) so demos can be built.',
     ...view.gaps,
     !c.imap && 'Optional: set ARVO_OUTREACH_IMAP_URL so replies stop follow-ups automatically.',
-    !c.alerts && 'Optional: set ARVO_NOTIFY_WEBHOOK (Slack or Discord) to hear about hot prospects at once.',
+    !c.alerts && 'Add your email under Settings → Notifications to hear about hot prospects at once.',
   ].filter(Boolean);
   if (!items.length) return null;
   return (
