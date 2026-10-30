@@ -179,6 +179,18 @@ export default function AutopilotConsole() {
         <span className="text-xs text-muted-foreground">
           Claude today {usd(view.today.usd)} of {usd(s.spendUsd)}
         </span>
+        {view.credits && (
+          <span
+            className={cn(
+              'text-xs',
+              view.credits.level === 'ok' ? 'text-muted-foreground' : view.credits.level === 'low' ? 'font-semibold text-amber-700 dark:text-amber-300' : 'font-semibold text-red-700 dark:text-red-300'
+            )}
+            title={`ElevenLabs ${view.credits.tier || ''} plan, checked ${relativeTime(view.credits.checkedAt)}${view.credits.emptyAt ? `; at the current pace they run out ${new Date(view.credits.emptyAt).toLocaleDateString()}` : ''}`}
+          >
+            Voice credits {Math.round(view.credits.pctLeft * 100)}% left
+            {view.credits.resetAt ? ` · resets ${new Date(view.credits.resetAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : ''}
+          </span>
+        )}
       </div>
 
       {s.mode === 'paused' && (
