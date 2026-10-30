@@ -186,7 +186,9 @@ export default function ApprovalQueue({ view, reload }) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          Approved emails go out during the send window, a few minutes apart{view.settings.sandbox ? ', to your sandbox address' : ''}.
+          {view.settings.sandbox
+            ? 'Sending is on hold (Sandbox): approved emails wait until it is turned off.'
+            : 'Approved emails go out in each recipient’s business hours, a few minutes apart.'}
         </p>
         <Button size="sm" onClick={approveAll} disabled={busy}>
           {busy ? <LoaderCircle className="animate-spin" /> : <CheckCheck />} Approve all {queue.length}

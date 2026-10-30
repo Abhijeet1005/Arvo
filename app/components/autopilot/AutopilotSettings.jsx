@@ -124,7 +124,7 @@ export default function AutopilotSettings({ view, save, busy, reload }) {
         <CardContent className="space-y-4 p-5">
           <SectionTitle>Notifications</SectionTitle>
           <p className="text-sm text-muted-foreground">
-            An email here when a prospect replies with interest or tries their demo, when something breaks, a summary in the evening (India time) when anything happened that day, and the weekly report. Sent from the outreach mailbox.
+            An email here when a prospect replies with interest or tries their demo, and when something breaks. Sent from the outreach mailbox.
           </p>
           <div className="flex flex-wrap items-end gap-3">
             <Field label="Send notifications to" className="min-w-[16rem] flex-1">
@@ -135,21 +135,30 @@ export default function AutopilotSettings({ view, save, busy, reload }) {
             </Button>
           </div>
           {testing && <p className="text-sm text-muted-foreground">{testing}</p>}
+          <div className="space-y-2 text-sm">
+            <p className="text-muted-foreground">Hot prospects and problems are always emailed. Optional:</p>
+            <label className="flex items-center gap-3">
+              <input type="checkbox" className="size-4 accent-emerald-600" checked={s.alerts.daily} onChange={(e) => setIn('alerts', { daily: e.target.checked })} />
+              Daily summary email (evening, India time)
+            </label>
+            <label className="flex items-center gap-3">
+              <input type="checkbox" className="size-4 accent-emerald-600" checked={s.alerts.weekly} onChange={(e) => setIn('alerts', { weekly: e.target.checked })} />
+              Weekly report email
+            </label>
+          </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardContent className="space-y-4 p-5">
-          <SectionTitle>Sandbox</SectionTitle>
+          <SectionTitle>Sandbox (hold sending)</SectionTitle>
           <label className="flex items-start gap-3 text-sm">
             <input type="checkbox" className="mt-1 size-4 accent-emerald-600" checked={s.sandbox} onChange={(e) => set({ sandbox: e.target.checked })} />
             <span>
-              Send every email to me instead of the prospect, with the real recipient in the subject. Leave this on until a few test runs look right.
+              Hold all sending. Research, demos and drafts carry on, and approved emails wait here
+              {view.held ? ` (${view.held} waiting now)` : ''}. Untick and save to start emailing companies, in their business hours and within the daily limits.
             </span>
           </label>
-          <Field label="Sandbox emails go to">
-            <Input type="email" value={s.sandboxTo} onChange={(e) => set({ sandboxTo: e.target.value })} placeholder="you@example.com" />
-          </Field>
           {view.sandboxSent > 0 && !view.settings.sandbox && (
             <div className="flex flex-wrap items-center gap-3 text-sm">
               <span>{view.sandboxSent} prospect{view.sandboxSent === 1 ? ' was' : 's were'} only emailed in sandbox.</span>

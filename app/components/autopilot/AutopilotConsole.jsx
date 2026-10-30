@@ -162,8 +162,8 @@ export default function AutopilotConsole() {
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
         <ModeSwitch mode={s.mode} busy={busy} onChange={(mode) => saveSettings({ mode })} />
         {s.sandbox && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 dark:bg-sky-500/10 dark:text-sky-300" title={`Every email goes to ${s.sandboxTo || 'your address'} instead of the prospect`}>
-            <FlaskConical className="size-3.5" /> Sandbox
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 dark:bg-sky-500/10 dark:text-sky-300" title="Sending is on hold: nothing is emailed until Sandbox is turned off in Settings">
+            <FlaskConical className="size-3.5" /> Sandbox: sending on hold{view.held ? ` (${view.held} ready)` : ''}
           </span>
         )}
         <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
