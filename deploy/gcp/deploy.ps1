@@ -8,8 +8,10 @@
 
     -Provision    install/refresh Node, Caddy and the systemd unit, and set a
                   NEW operator password (printed once, saved locally)
-    -SyncEnv      copy ELEVENLABS_*, ARVO_NOTIFY_WEBHOOK and ARVO_CALL_PATH
-                  from .env.local to the server
+    -SyncEnv      copy ELEVENLABS_*, ANTHROPIC_API_KEY, ARVO_NOTIFY_WEBHOOK,
+                  ARVO_SMTP_URL, ARVO_MAIL_FROM, ARVO_OUTREACH_SMTP_URL,
+                  ARVO_OUTREACH_IMAP_URL and ARVO_CALL_PATH from .env.local
+                  to the server
     -SeedData     copy .agent.json to the server, only if it has none yet
     -UpdateProxy  re-render the Caddy config from Caddyfile.template (keeps
                   the current operator login; backs up, validates, checks the
@@ -19,6 +21,12 @@
   What it does: uploads only the source needed to build (never secrets),
   builds on the server (Linux), switches the live release, health-checks it,
   and rolls back automatically if the new release doesn't come up.
+
+  The site's address: the "domain" in deploy.local.json (or -Domain), such as
+  app.tryarvo.in, with an A record pointing at the server's static IP. Without
+  one it is the <ip>.sslip.io name. With one, the sslip.io name keeps working
+  too, and the app is told its public address (ARVO_PUBLIC_URL, with -SyncEnv).
+  Changing it needs -UpdateProxy once.
 
   Setup (once): say which Google Cloud account and project to use. They are
   personal, so they are not stored in the repository. Any one of:
@@ -39,6 +47,7 @@ param(
   [switch]$UpdateProxy,
   [string]$Account = $env:ARVO_GCP_ACCOUNT,
   [string]$Project = $env:ARVO_GCP_PROJECT,
+  [string]$Domain = $env:ARVO_DOMAIN,
   [string]$Region = 'asia-south1',
   [string]$Zone = 'asia-south1-a',
   [string]$Instance = 'arvo-app',
@@ -61,6 +70,7 @@ if ((-not $Account -or -not $Project) -and (Test-Path -LiteralPath $localConfig)
   $cfg = Get-Content -LiteralPath $localConfig -Raw | ConvertFrom-Json
   if (-not $Account) { $Account = $cfg.account }
   if (-not $Project) { $Project = $cfg.project }
+  if (-not $Domain -and $cfg.PSObject.Properties['domain']) { $Domain = $cfg.domain }
 }
 if (-not $Account -or -not $Project) {
   throw 'Google Cloud account/project not set. Copy deploy\gcp\deploy.local.example.json to deploy\gcp\deploy.local.json and fill it in (or set ARVO_GCP_ACCOUNT / ARVO_GCP_PROJECT, or pass -Account / -Project).'
@@ -73,7 +83,14 @@ $ip = (& gcloud compute addresses describe $AddressName --region=$Region @gcloud
 Assert-Ok 'Looking up the static IP'
 $ip = "$ip".Trim()
 if (-not $ip) { throw "Static IP '$AddressName' not found in $Region." }
-$domain = ($ip -replace '\.', '-') + '.sslip.io'
+$sslip = ($ip -replace '\.', '-') + '.sslip.io'
+# $domain is the -Domain parameter (PowerShell names ignore case): the site's
+# address from here on, the sslip.io name when none was given.
+if (-not $domain) { $domain = $sslip }
+$domain = $domain.ToLower()
+if ($domain -notmatch '^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$') { throw "'$domain' is not a valid domain name." }
+# With its own domain the server also keeps answering on the sslip.io name.
+$also = if ($domain -ne $sslip) { $sslip } else { '' }
 $target = "$User@$ip"
 
 # Pin the server's SSH host key from Google's guest attributes (published by
@@ -115,7 +132,7 @@ try {
     }
     Send-File $pwFile '/tmp/arvo-admin-password'
     Remove-Item $pwFile -Force
-    Invoke-Remote "chmod 600 /tmp/arvo-admin-password && sudo bash /tmp/provision.sh $domain $ip; rc=`$?; rm -f /tmp/provision.sh /tmp/arvo-admin-password; exit `$rc"
+    Invoke-Remote "chmod 600 /tmp/arvo-admin-password && sudo bash /tmp/provision.sh $domain $ip $also; rc=`$?; rm -f /tmp/provision.sh /tmp/arvo-admin-password; exit `$rc"
 
     $saveDir = Join-Path $env:LOCALAPPDATA 'Arvo'
     New-Item -ItemType Directory -Path $saveDir -Force | Out-Null
@@ -124,12 +141,14 @@ try {
 
   # ---- 2. Secrets: only what the app reads ---------------------------------
   if ($SyncEnv) {
-    Say 'Syncing ELEVENLABS_*, ARVO_NOTIFY_WEBHOOK, ARVO_SMTP_URL, ARVO_MAIL_FROM and ARVO_CALL_PATH settings'
-    $allowed = 'ELEVENLABS_API_KEY', 'ELEVENLABS_AGENT_ID', 'ELEVENLABS_VOICE_ID', 'ARVO_NOTIFY_WEBHOOK', 'ARVO_SMTP_URL', 'ARVO_MAIL_FROM', 'ARVO_CALL_PATH'
+    Say 'Syncing ELEVENLABS_*, ANTHROPIC_API_KEY, ARVO_NOTIFY_WEBHOOK, ARVO_SMTP_URL, ARVO_MAIL_FROM, ARVO_OUTREACH_* and ARVO_CALL_PATH settings'
+    $allowed = 'ELEVENLABS_API_KEY', 'ELEVENLABS_AGENT_ID', 'ELEVENLABS_VOICE_ID', 'ANTHROPIC_API_KEY', 'ARVO_NOTIFY_WEBHOOK', 'ARVO_SMTP_URL', 'ARVO_MAIL_FROM', 'ARVO_OUTREACH_SMTP_URL', 'ARVO_OUTREACH_IMAP_URL', 'ARVO_CALL_PATH'
     $envLines = foreach ($line in Get-Content (Join-Path $ProjectDir '.env.local')) {
       if ($line -match '^\s*([A-Z0-9_]+)\s*=\s*(\S.*?)\s*$' -and $allowed -contains $Matches[1]) { "$($Matches[1])=$($Matches[2])" }
     }
     if (-not ($envLines | Where-Object { $_ -like 'ELEVENLABS_API_KEY=*' })) { throw 'ELEVENLABS_API_KEY is not set in .env.local.' }
+    # Where the autopilot's emails link to (demo and unsubscribe pages).
+    $envLines = @($envLines) + "ARVO_PUBLIC_URL=https://$domain"
     $envFile = Join-Path $staging 'arvo.env'
     Write-Lf $envFile (($envLines -join "`n") + "`n")
     Send-File $envFile '/tmp/arvo.env'
@@ -153,7 +172,7 @@ try {
   # ---- 4. Source → build on the server → switch release ---------------------
   Say 'Packaging source'
   $include = @('app', 'components', 'lib', 'package.json', 'package-lock.json', 'next.config.js',
-    'jsconfig.json', 'postcss.config.js', 'tailwind.config.js', 'public') |
+    'instrumentation.js', 'jsconfig.json', 'postcss.config.js', 'tailwind.config.js', 'public') |
     Where-Object { Test-Path (Join-Path $ProjectDir $_) }
   $archive = Join-Path $staging 'arvo-src.tar.gz'
   & tar -czf $archive -C $ProjectDir @include
@@ -176,7 +195,7 @@ try {
       Write-Lf $copy (Get-Content (Join-Path $PSScriptRoot $name) -Raw)
       Send-File $copy "/tmp/$name"
     }
-    Invoke-Remote "sudo bash /tmp/proxy.sh $domain $ip; rc=`$?; rm -f /tmp/proxy.sh /tmp/Caddyfile.template; exit `$rc"
+    Invoke-Remote "sudo bash /tmp/proxy.sh $domain $ip $also; rc=`$?; rm -f /tmp/proxy.sh /tmp/Caddyfile.template; exit `$rc"
   }
 
   # ---- 6. Verify through the public HTTPS endpoint --------------------------

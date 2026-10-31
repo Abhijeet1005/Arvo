@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # One-time (idempotent) server setup for Arvo on a fresh Debian GCE VM.
 #
-#   sudo bash /tmp/provision.sh <domain> <public-ip>
+#   sudo bash /tmp/provision.sh <domain> <public-ip> [<also-serve>]
 #
 # Expects these uploaded to /tmp first (deploy\gcp\deploy.ps1 does this):
 #   /tmp/arvo.service            systemd unit for the app
@@ -15,6 +15,10 @@ export DEBIAN_FRONTEND=noninteractive
 
 DOMAIN="${1:?domain required}"
 PUBLIC_IP="${2:?public ip required}"
+# Another hostname to serve as well (the sslip.io address once the server has
+# its own domain).
+ALSO="${3:-}"
+SITES="$DOMAIN${ALSO:+, $ALSO}"
 NODE_VERSION="${NODE_VERSION:-v24.13.0}"
 PW_FILE=/tmp/arvo-admin-password
 APT=(apt-get -y -qq -o DPkg::Lock::Timeout=600)
@@ -84,7 +88,7 @@ echo "== caddy config ($DOMAIN)"
 if [ -f "$PW_FILE" ]; then
   HASH="$(caddy hash-password --plaintext "$(cat "$PW_FILE")")"
   shred -u "$PW_FILE" 2>/dev/null || rm -f "$PW_FILE"
-  sed -e "s|__DOMAIN__|$DOMAIN|g" -e "s|__PUBLIC_IP__|$PUBLIC_IP|g" -e "s|__ADMIN_HASH__|$HASH|g" \
+  sed -e "s|__SITE_ADDRESSES__|$SITES|g" -e "s|__DOMAIN__|$DOMAIN|g" -e "s|__PUBLIC_IP__|$PUBLIC_IP|g" -e "s|__ADMIN_HASH__|$HASH|g" \
     /tmp/Caddyfile.template > /etc/caddy/Caddyfile
   rm -f /tmp/Caddyfile.template
   caddy fmt --overwrite /etc/caddy/Caddyfile
@@ -96,6 +100,8 @@ fi
 
 # The customer page's server render fetches its own public API by hostname;
 # resolve that hostname locally so the request stays on this machine.
-grep -qE "^127\.0\.0\.1[[:space:]]+$DOMAIN\$" /etc/hosts || echo "127.0.0.1 $DOMAIN" >> /etc/hosts
+for host in $DOMAIN $ALSO; do
+  grep -qE "^127\.0\.0\.1[[:space:]]+$host\$" /etc/hosts || echo "127.0.0.1 $host" >> /etc/hosts
+done
 
 echo "== provision complete"
