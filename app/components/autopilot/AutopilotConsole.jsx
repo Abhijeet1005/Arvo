@@ -117,6 +117,18 @@ export default function AutopilotConsole() {
     }
   }
 
+  async function resumeSending() {
+    setBusy(true);
+    try {
+      await api('/api/autopilot/prospects', { method: 'POST', body: { action: 'resume_sending' } });
+      await load();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function runNow() {
     setRunning(true);
     setNotice('');
@@ -200,6 +212,18 @@ export default function AutopilotConsole() {
       )}
       {notice && <p className="text-sm text-muted-foreground">{notice}</p>}
       {error && <p className="text-sm text-destructive">{error}</p>}
+
+      {view.sendHold && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50/70 p-4 text-sm dark:border-red-500/20 dark:bg-red-500/5">
+          <div>
+            <div className="font-semibold text-red-800 dark:text-red-300">Sending paused automatically</div>
+            <div className="text-red-900/90 dark:text-red-200/90">{view.sendHold.reason}</div>
+          </div>
+          <Button size="sm" variant="outline" onClick={resumeSending} disabled={busy}>
+            Resume sending
+          </Button>
+        </div>
+      )}
 
       <Setup view={view} onOpenSettings={() => setTab('settings')} />
 
